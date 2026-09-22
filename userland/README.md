@@ -1,4 +1,4 @@
-#FakeTime.c:
+# FakeTime.c:
 
 ## Without the trick
 $ date

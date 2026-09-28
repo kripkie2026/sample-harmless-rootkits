@@ -1,0 +1,142 @@
+# ============================================================
+# Linux Kernel Module / LKM Rootkit Detection
+# Ubuntu / Debian auditd
+#
+# Covers:
+#   - Kernel module loading
+#   - Kernel module unloading
+#   - Module staging/modification
+#   - Module-load configuration changes
+#   - kexec
+#   - Audit configuration tampering
+# ============================================================
+
+
+# ------------------------------------------------------------
+# 1. Kernel module load/unload syscalls
+#
+# These are the most important rules.
+#
+# init_module()  = load module from memory
+# finit_module() = load module from file descriptor
+# delete_module() = unload module
+#
+# Do NOT restrict these to auid>=1000:
+# root/system services can legitimately load modules, and
+# an attacker may operate as root.
+# ------------------------------------------------------------
+
+-a always,exit -F arch=b64 -S init_module -S finit_module -S delete_module -k kernel_module
+
+-a always,exit -F arch=b32 -S init_module -S finit_module -S delete_module -k kernel_module
+
+
+# ------------------------------------------------------------
+# 2. kexec
+#
+# kexec can replace the running kernel and is highly relevant
+# to kernel-level persistence/evasion investigations.
+# ------------------------------------------------------------
+
+-a always,exit -F arch=b64 -S kexec_load -S kexec_file_load -k kernel_kexec
+
+-a always,exit -F arch=b32 -S kexec_load -k kernel_kexec
+
+
+# ------------------------------------------------------------
+# 3. Module-management utilities
+#
+# These provide useful process-level context:
+#   insmod
+#   modprobe
+#   rmmod
+#
+# Syscall rules above remain the authoritative telemetry.
+# ------------------------------------------------------------
+
+-w /usr/sbin/insmod -p x -k kernel_module_tool
+
+-w /usr/sbin/modprobe -p x -k kernel_module_tool
+
+-w /usr/sbin/rmmod -p x -k kernel_module_tool
+
+
+# Some Ubuntu installations expose these through /sbin.
+# Keep these if the paths exist on your system.
+
+-w /sbin/insmod -p x -k kernel_module_tool
+
+-w /sbin/modprobe -p x -k kernel_module_tool
+
+-w /sbin/rmmod -p x -k kernel_module_tool
+
+
+# ------------------------------------------------------------
+# 4. Kernel module directories
+#
+# Legitimate modules normally live below:
+#   /lib/modules/
+#
+# Watch creation/modification/deletion of module files.
+# ------------------------------------------------------------
+
+-w /lib/modules/ -p wa -k kernel_module_file
+
+
+# ------------------------------------------------------------
+# 5. Module-loading configuration
+#
+# Unexpected changes here can establish persistence.
+# ------------------------------------------------------------
+
+-w /etc/modules -p wa -k kernel_module_config
+
+-w /etc/modules-load.d/ -p wa -k kernel_module_config
+
+-w /etc/modprobe.d/ -p wa -k kernel_module_config
+
+-w /etc/modprobe.conf -p wa -k kernel_module_config
+
+
+# ------------------------------------------------------------
+# 6. Sysctl configuration
+#
+# Kernel/rootkit investigations should correlate suspicious
+# module activity with kernel configuration changes.
+# ------------------------------------------------------------
+
+-w /etc/sysctl.conf -p wa -k kernel_sysctl
+
+-w /etc/sysctl.d/ -p wa -k kernel_sysctl
+
+
+# ------------------------------------------------------------
+# 7. Audit configuration tampering
+#
+# A rootkit deployment may be accompanied by attempts to
+# weaken or disable auditing.
+# ------------------------------------------------------------
+
+-w /etc/audit/ -p wa -k audit_config
+
+-w /etc/audit/rules.d/ -p wa -k audit_config
+
+
+# ------------------------------------------------------------
+# 8. Audit log tampering
+# ------------------------------------------------------------
+
+-w /var/log/audit/ -p wa -k audit_log
+
+
+# ------------------------------------------------------------
+# 9. Changes to systemd module-loading mechanisms
+#
+# Useful for persistence investigations.
+# ------------------------------------------------------------
+
+-w /usr/lib/modules-load.d/ -p wa -k kernel_module_config
+
+-w /usr/local/lib/modules-load.d/ -p wa -k kernel_module_config
+
+-w /run/modules-load.d/ -p wa -k kernel_module_config

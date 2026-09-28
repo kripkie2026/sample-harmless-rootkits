@@ -1,0 +1,41 @@
+# ============================================================
+# LD_PRELOAD / userland-rootkit monitoring
+# ============================================================
+
+# /etc/ld.so.preload
+-a always,exit -F arch=b64 -F path=/etc/ld.so.preload -F perm=wa -F key=ldpreload
+
+
+# ============================================================
+# System library modification
+# ============================================================
+
+-a always,exit -F arch=b64 -F dir=/lib -F perm=wa -F key=lib-modification
+-a always,exit -F arch=b64 -F dir=/usr/lib -F perm=wa -F key=usr-lib-modification
+
+# These may exist depending on architecture/distribution.
+-a always,exit -F arch=b64 -F dir=/lib64 -F perm=wa -F key=lib64-modification
+-a always,exit -F arch=b64 -F dir=/usr/lib64 -F perm=wa -F key=usr-lib64-modification
+
+
+# ============================================================
+# /etc modification
+# ============================================================
+
+-a always,exit -F arch=b64 -F dir=/etc -F perm=wa -F key=etc-modification
+
+
+# ============================================================
+# Suspicious execution from writable locations
+# ============================================================
+
+-a always,exit -F arch=b64 -F dir=/tmp -F perm=x -F key=tmp-execution
+-a always,exit -F arch=b64 -F dir=/var/tmp -F perm=x -F key=vartmp-execution
+
+
+# ============================================================
+# Writes to temporary locations
+# ============================================================
+
+-a always,exit -F arch=b64 -F dir=/tmp -F perm=wa -F key=tmp-write
+-a always,exit -F arch=b64 -F dir=/var/tmp -F perm=wa -F key=vartmp-write

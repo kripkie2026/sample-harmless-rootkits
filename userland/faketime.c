@@ -3,6 +3,7 @@
 #include <dlfcn.h>
 #include <time.h>
 #include <sys/time.h>
+#include <unistd.h>
 
 /* Helper: get the original function pointer once */
 static void *get_real(const char *name) {
@@ -52,7 +53,7 @@ time_t time(time_t *t) {
     return e;
 }
 
-int gettimeofday(struct timeval *tv, struct timezone *tz) {
+int gettimeofday(struct timeval *tv, void *tz) {
     typedef int (*real_gettimeofday_t)(struct timeval*, struct timezone*);
     static real_gettimeofday_t real_gettimeofday = NULL;
     if (!real_gettimeofday) real_gettimeofday = (real_gettimeofday_t) get_real("gettimeofday");
